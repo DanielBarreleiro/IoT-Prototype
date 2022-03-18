@@ -15,6 +15,8 @@ class MainApp(IoTApp):
 
     def init(self):
         self.rtc.datetime((2022, 3, 18, 5, 10, 00, 00, 0))
+        self.day_names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+
         self.sensor_bme680 = BME680(i2c=self.rig.i2c_adapter, i2c_addr = 0x76)
         
         self.sensor_bme680.set_humidity_oversample(OS_2X)
@@ -32,7 +34,26 @@ class MainApp(IoTApp):
         self.count = 0
 
     def loop(self):
+        now = self.rtc.datetime()
+        year = now[0]
+        month = now[1]
+        day = now[2]
+        hour = now[4]
+        minute = now[5]
+        second = now[6]
+
+        # Format strings to hold the current date and the current time
+        date_str = "{0}/{1}/{2}".format(day, month, year)
+        time_str = "{0}:{1}:{2}".format(hour, minute, second)
+
+        self.oled_clear()
+        self.oled_text(date_str, 0, 4)
+        self.oled_text(time_str, 0, 14)
+        self.oled_display()
+
         if access_period == True:
+            self.oled_text("Access: {0}s".format(self.count), 0, 24)
+            self.oled_display()
             if self.sensor_bme680.get_sensor_data():
                 if self.count > 10:
                     npm.fill((5, 0, 0))
@@ -80,7 +101,6 @@ class MainApp(IoTApp):
         
     def btnB_handler(self, pin):
         global access_period
-        #global count
         access_period = False
         access_end = "{0}\n".format("Access Period Ended")
         self.file.write(access_end)
