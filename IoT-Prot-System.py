@@ -14,7 +14,7 @@ npm = NeoPixel(neopixel_pin, 32, bpp=3, timing=1)
 class MainApp(IoTApp):
 
     def init(self):
-        self.rtc.datetime((2022, 3, 18, 5, 10, 00, 00, 0))
+        self.rtc.datetime((2022, 2, 18, 5, 9, 30, 00, 0))
         self.day_names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
         self.sensor_bme680 = BME680(i2c=self.rig.i2c_adapter, i2c_addr = 0x76)
@@ -25,7 +25,7 @@ class MainApp(IoTApp):
         self.sensor_bme680.set_filter(FILTER_SIZE_3)
         self.sensor_bme680.set_gas_status(DISABLE_GAS_MEAS)
 
-        self.file_name = "a.csv"
+        self.file_name = "IoT-Data.csv"
         if self.file_exists(self.file_name):
             os.remove(self.file_name)
         self.file = open(self.file_name, "w+") 
