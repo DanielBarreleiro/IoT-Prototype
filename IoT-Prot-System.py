@@ -1,14 +1,20 @@
 import os
 from time import sleep
 from machine import RTC, Pin
+from neopixel import NeoPixel
 from libs.iot_app import IoTApp
 from libs.bme680 import BME680, OS_2X, OS_4X, OS_8X, FILTER_SIZE_3, DISABLE_GAS_MEAS
 
 access_period = False
 
+neopixel_pin = Pin(21)
+neopixel_pin.init(mode=Pin.OUT, pull=Pin.PULL_DOWN)
+npm = NeoPixel(neopixel_pin, 32, bpp=3, timing=1)
+
 class MainApp(IoTApp):
 
     def init(self):
+        self.rtc.datetime((2022, 3, 18, 5, 10, 00, 00, 0))
         self.sensor_bme680 = BME680(i2c=self.rig.i2c_adapter, i2c_addr = 0x76)
         
         self.sensor_bme680.set_humidity_oversample(OS_2X)
@@ -23,17 +29,37 @@ class MainApp(IoTApp):
         self.file = open(self.file_name, "w+") 
         self.acess = False
 
-    def loop(self):
-        self.oled_clear()
+        self.count = 0
 
+    def loop(self):
         if access_period == True:
             if self.sensor_bme680.get_sensor_data():
+                if self.count > 10:
+                    npm.fill((5, 0, 0))
+                    npm.write()
+                if self.count <= 10:
+                    npm.fill((0, 5, 0))
+                    npm.write()
+                    
+                # Current date and time taken from the real-time clock
+                now = self.rtc.datetime()
+                year = now[0]
+                month = now[1]
+                day = now[2]
+                hour = now[4]
+                minute = now[5]
+                second = now[6]
+
+                 # Format timestamp
+                timestamp = "{0}-{1}-{2}|{3}:{4}:{5}".format(year, month, day, hour, minute, second)
+
                 tm_reading = self.sensor_bme680.data.temperature  # In degrees Celsius 
                 rh_reading = self.sensor_bme680.data.humidity     # As a percentage (ie. relative humidity))
                         
-                output = "{0:.2f}C | {1:.2f}%rh".format(tm_reading, rh_reading)
+                output = "{0} | {1:.2f}C | {2:.2f}%rh".format(timestamp, tm_reading, rh_reading)
                 data_str = "{0}\n".format(output)
                 self.file.write(data_str)
+                self.count += 1
             
         sleep(1)
     
@@ -45,7 +71,7 @@ class MainApp(IoTApp):
         file_names = os.listdir()
         return file_name in file_names
 
-#print access twice??
+#prints access twice why??
     def btnA_handler(self, pin, pull=Pin.PULL_DOWN):
         global access_period
         access_period = True
@@ -54,12 +80,17 @@ class MainApp(IoTApp):
         
     def btnB_handler(self, pin):
         global access_period
+        #global count
         access_period = False
         access_end = "{0}\n".format("Access Period Ended")
         self.file.write(access_end)
+        npm.fill((0, 0, 0))
+        npm.write()
+        self.count = 0
 
 # Program entrance function
 def main():
+
     app = MainApp(name="IoT Prot Sys", has_oled_board=True, finish_button="C", start_verbose=True)
     
     # Run the app
