@@ -72,7 +72,7 @@ class MainApp(IoTApp):
                 second = now[6]
 
                  # Format timestamp
-                timestamp = "{0}-{1}-{2}|{3}:{4}:{5}".format(year, month, day, hour, minute, second)
+                timestamp = "{0}-{1}-{2} | {3}:{4}:{5}".format(year, month, day, hour, minute, second)
 
                 tm_reading = self.sensor_bme680.data.temperature  # In degrees Celsius 
                 rh_reading = self.sensor_bme680.data.humidity     # As a percentage (ie. relative humidity))
@@ -94,15 +94,41 @@ class MainApp(IoTApp):
 
 #prints access twice why??
     def btnA_handler(self, pin, pull=Pin.PULL_DOWN):
+
+        # Current date and time taken from the real-time clock
+        now = self.rtc.datetime()
+        year = now[0]
+        month = now[1]
+        day = now[2]
+        hour = now[4]
+        minute = now[5]
+        second = now[6]
+
+        # Format timestamp
+        timestamp = "{0}-{1}-{2} | {3}:{4}:{5}".format(year, month, day, hour, minute, second)
+
         global access_period
         access_period = True
-        access_start = "{0}\n".format("Access Period Started")
+        access_start = "{0} | {1}\n".format(timestamp, "Access Period Started")
         self.file.write(access_start)
         
     def btnB_handler(self, pin):
+
+        # Current date and time taken from the real-time clock
+        now = self.rtc.datetime()
+        year = now[0]
+        month = now[1]
+        day = now[2]
+        hour = now[4]
+        minute = now[5]
+        second = now[6]
+
+        # Format timestamp
+        timestamp = "{0}-{1}-{2} | {3}:{4}:{5}".format(year, month, day, hour, minute, second)
+
         global access_period
         access_period = False
-        access_end = "{0}\n".format("Access Period Ended")
+        access_end = "{0} | {1} | Access time: {2}s\n".format(timestamp, "Access Period Ended", self.count)
         self.file.write(access_end)
         npm.fill((0, 0, 0))
         npm.write()
